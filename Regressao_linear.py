@@ -1,7 +1,7 @@
 #coding: utf-8
 from numpy import *
 
-def compute_SQR(b, m, points):
+def compute_RSS(b, m, points):
     totalError = 0
     for i in range(0,len(points)):
         x = points[i,0]
@@ -21,16 +21,18 @@ def step_gradient(current_b, current_m, points):
         m_gradient += -(2/n) * x*(y - ((current_m * x) + current_b))
     return [b_gradient,m_gradient]
 
-def gradient_descent_runner(points, initial_b, initial_m, learning_rate, gradient_tolerance):
+def gradient_descent_runner2(points, initial_b, initial_m, learning_rate, gradient_tolerance):
     b = initial_b
     m = initial_m
-    b_gradient, m_gradient = gradient_tolerance +1
+    b_gradient, m_gradient = gradient_tolerance + 1
+    i = 0
 
-    while b_gradient > gradient_tolerance and m_gradient > gradient_tolerance:
+    while abs(b_gradient) > gradient_tolerance and abs(m_gradient) > gradient_tolerance:
+        i += 1
         b_gradient, m_gradient = step_gradient(b, m, array(points))
         b = b - (learning_rate * b_gradient)
         m = m - (learning_rate * m_gradient)
-        print "Iteração: {0}, w0 = {1}, w1 = {2}, RSS = {3}".format((i + 1), b, m,compute_SQR(b, m, points))
+        print "Iteração: {0}, w0 = {1}, w1 = {2}, RSS = {3}".format(i, b, m,compute_RSS(b, m, points))
     return [b,m]
 
 def estimativa_coeficientes(points):
@@ -58,9 +60,8 @@ def run():
     learning_rate = 0.0025
     initial_b = 0
     initial_m = 0
-    num_iterations = 20000
-
-    [b,m] = gradient_descent_runner(points,initial_b,initial_m,learning_rate, num_iterations)
+    gradient_tolerance = 20000
+    gradient_descent_runner2(points,initial_b,initial_m,learning_rate, gradient_tolerance)
 
 
 if __name__ == '__main__':
