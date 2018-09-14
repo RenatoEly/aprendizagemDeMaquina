@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import time
 
 def compute_mse_vectorized(w,X,Y):
@@ -9,31 +8,28 @@ def compute_mse_vectorized(w,X,Y):
 
 def step_gradient_vectorized(w_current,X,Y,learningRate):
     res = Y - np.dot(X,w_current)
-    b_gradient = np.sum(res)
-    X = X[:,1][:,np.newaxis]
-    m_gradient = np.sum(np.multiply(res,X))
-    new_w = np.array([(w_current[0] + (2 * learningRate * b_gradient)),
-             (w_current[1] + (2 * learningRate * m_gradient))])
-    return [new_w,b_gradient,m_gradient]
+    gradient = np.multiply(res,X)
+    gradient = np.sum(gradient,axis=0)
+    gradient = gradient[:,np.newaxis]
+    new_w = w_current + 2 * learningRate * gradient
+    return [new_w,gradient]
 
 def gradient_descent_runner_vectorized(starting_w, X,Y, learning_rate, epsilon):
     w = starting_w
     grad = np.array([np.inf,np.inf])
-    i = 0
+    i = 1
     while (np.linalg.norm(grad)>=epsilon):
-        w,b_gradient,m_gradient = step_gradient_vectorized(w, X, Y, learning_rate)
-        grad = np.array([b_gradient,m_gradient])
-        #print(np.linalg.norm(grad))
-        if i % 1000 == 0:
-            print("MSE na iteração {0} é de {1}".format(i,compute_mse_vectorized(w, X, Y)))
+        w,grad = step_gradient_vectorized(w, X, Y, learning_rate)
+        if i % 100 == 0:
+            print("Na iteração {0}, w0 = {1}, w1 = {2} e MSE = {3}".format(i,w[0],w[1],compute_mse_vectorized(w, X, Y)))
         i+= 1
     return w
 
 points = np.genfromtxt("sample_treino.csv", delimiter=",")
 points = np.c_[np.ones(len(points)),points]
-X = points[:,0:6]
-Y = points[:,6][:,np.newaxis]
-init_w = np.zeros((5,1))
+X = points[:,0:2]
+Y = points[:,3][:,np.newaxis]
+init_w = np.zeros((2,1))
 learning_rate = 0.0001
 #num_iterations = 10000
 epsilon = 0.5
