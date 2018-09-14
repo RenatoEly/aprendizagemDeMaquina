@@ -8,10 +8,10 @@ def compute_mse_vectorized(w,X,Y):
 
 def step_gradient_vectorized(w_current,X,Y,learningRate):
     res = Y - np.dot(X,w_current)
-    gradient = np.multiply(res,X)
-    gradient = np.sum(gradient,axis=0)
+    gradient = np.multiply(X,res)
+    new_w = w_current + 2 * learningRate * np.dot(X.T,res)
+    gradient = -2 * np.sum(gradient,axis=0)
     gradient = gradient[:,np.newaxis]
-    new_w = w_current + 2 * learningRate * gradient
     return [new_w,gradient]
 
 def gradient_descent_runner_vectorized(starting_w, X,Y, learning_rate, epsilon):
@@ -25,10 +25,10 @@ def gradient_descent_runner_vectorized(starting_w, X,Y, learning_rate, epsilon):
         i+= 1
     return w
 
-points = np.genfromtxt("sample_treino.csv", delimiter=",")
+points = np.genfromtxt("income.csv", delimiter=",")
 points = np.c_[np.ones(len(points)),points]
 X = points[:,0:2]
-Y = points[:,3][:,np.newaxis]
+Y = points[:,2][:,np.newaxis]
 init_w = np.zeros((2,1))
 learning_rate = 0.0001
 #num_iterations = 10000
