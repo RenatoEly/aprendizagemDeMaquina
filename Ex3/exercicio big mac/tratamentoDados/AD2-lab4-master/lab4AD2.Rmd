@@ -1,0 +1,111 @@
+---
+title: "Lab4 - AD 2"
+author: "Renato Ely"
+date: "17 de dezembro de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Lab 4 - AD2
+
+```{r}
+library(caret)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+treino <- read.csv("train.csv", encoding="UTF-8")
+teste <- read.csv("test.csv", encoding="UTF-8")
+
+
+summary(treino)
+```
+
+Observando as variáveis, podemos descartar algumas como nome, número do candidato e setor econômico da receita e de despesa, visto que as duas últimas possuem uma grande quantidade de valor NULO e mesmo retirando os valores NULOS quase 65% dos valores são iguais (Atividades de organizações políticas). Também foi retirada a variável cargo, pois ela possui o mesmo valor (deputado) para todos os registros.
+
+```{r}
+treino <- treino %>% select(-nome, -setor_economico_receita, -cargo, -setor_economico_despesa)
+
+teste <- teste %>% select(-nome, -setor_economico_receita, -cargo, -setor_economico_despesa)
+
+treino$recursos_de_partidos[is.na(treino$recursos_de_partidos)] <- median(treino$recursos_de_partidos, na.rm = TRUE)
+
+treino$recursos_de_outros_candidatos.comites[is.na(treino$recursos_de_outros_candidatos.comites)] <- median(treino$recursos_de_outros_candidatos.comites, na.rm = TRUE)
+
+treino$recursos_de_pessoas_juridicas[is.na(treino$recursos_de_pessoas_juridicas)] <- median(treino$recursos_de_pessoas_juridicas, na.rm = TRUE)
+
+treino$recursos_proprios[is.na(treino$recursos_proprios)] <- median(treino$recursos_proprios, na.rm = TRUE)
+
+treino$recursos_de_pessoas_físicas[is.na(treino$recursos_de_pessoas_físicas)] <- median(treino$recursos_de_pessoas_físicas, na.rm = TRUE)
+
+
+teste$recursos_de_partidos[is.na(teste$recursos_de_partidos)] <- median(teste$recursos_de_partidos, na.rm = TRUE)
+teste$recursos_de_outros_candidatos.comites[is.na(teste$recursos_de_outros_candidatos.comites)] <- median(teste$recursos_de_outros_candidatos.comites, na.rm = TRUE)
+teste$recursos_de_pessoas_juridicas[is.na(teste$recursos_de_pessoas_juridicas)] <- median(teste$recursos_de_pessoas_juridicas, na.rm = TRUE)
+teste$recursos_proprios[is.na(teste$recursos_proprios)] <- median(teste$recursos_proprios, na.rm = TRUE)
+teste$recursos_de_pessoas_físicas[is.na(teste$recursos_de_pessoas_físicas)] <- median(teste$recursos_de_pessoas_físicas, na.rm = TRUE)
+
+```
+Para não serem descartadas linhas com valores NA, esses valores foram substituídos pela mediana dos valores das suas respectivas colunas.
+
+###1. Usando todas as variáveis disponíveis, tune (usando validação cruzada): (i) um modelo de regressão Ridge, (ii) um modelo de regressão Lasso e (iii) um modelo KNN. Para os modelos de regressão linear, o parâmetro a ser tunado é o lambda (penalização dos coeficientes) e o KNN o número de vizinhos.
+
+```{r}
+fitControl <- trainControl(method = "cv",
+                    number = 10)
+
+lambdaGrid <- expand.grid(lambda = 10^seq(2, -10, length=10))
+
+fractionGrid <- expand.grid(fraction = seq(0.001, 1, length = 10))
+
+neighborsGrid <- expand.grid(k = seq(1, 30, length=10))
+
+lasso <- train(votos ~ ., data=treino, 
+                  method="lasso", 
+                  metric="RMSE",
+                  tuneLength = 2,
+                  
+                  trControl=fitControl)
+
+ridge <- train(votos ~ ., data=treino, 
+                  method="ridge", 
+                  metric="RMSE",
+                  tuneLength = 2,
+                  
+                  trControl=fitControl)
+
+knn <- train(votos ~ ., data=treino, 
+                  method="knn", 
+                  metric="RMSE",
+                  tuneLength = 2,
+                  
+                  trControl=fitControl)
+
+```
+
+Após o pré-processamento nas variáveis, foram criados 3 modelos como pedido na questão e treinados com os dados processados.
+
+###2. Compare os três modelos em termos do erro RMSE de validação cruzada.
+
+```{r}
+ggplot(model_ridge)
+ggplot(model_lasso)
+ggplot(model_knn)
+```
+O modelo Ridge mostra uma curva sempre crescente começando com lambda = 0, sendo assim, o melhor modelo usando esse método é o que não penaliza nenhuma variável, mostrando que todas as variáveis possuem alguma importância.
+
+No modelo Lasso o parâmetro fraction varia entre 0 e 1, e a curva mostra que para um fraction igual a 0, RMSE é alto e a medida que ele aumenta o RMSE diminui, estabilizando por volta de fraction = 0,25.
+
+No módelo KNN, a curva mostra que o RMSE vai melhorando a medida que se aumenta o número de vizinhos, mas proximo de 10 vizinhos, aumentar o número de vizinhos começa a piorar o modelo.
+
+###3. Quais as variáveis mais importantes segundo o modelo de regressão Ridge e Lasso?  Variáveis foram descartadas pelo Lasso? Quais?
+
+```{r}
+ggplot(varImp(model_ridge))
+
+ggplot(varImp(model_lasso))
+```
+
