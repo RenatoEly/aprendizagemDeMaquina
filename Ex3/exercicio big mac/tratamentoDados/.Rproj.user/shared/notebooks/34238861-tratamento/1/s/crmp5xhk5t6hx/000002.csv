@@ -1,3 +1,0 @@
-"0","data <- mutate(data, dollar_price = local_price/dollar_ex)
-"
-"2","‘/’ not meaningful for factors"
